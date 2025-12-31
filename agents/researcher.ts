@@ -1,21 +1,21 @@
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
 
-export interface ResearchResult {
+export interface SearchResult {
   content: string;
   sources: string[];
-  qualityScore: number;
 }
 
-export const executeTask = async (query: string): Promise<ResearchResult> => {
+// Renamed logic to Search Agent behavior
+export const executeTask = async (query: string): Promise<SearchResult> => {
   const ai = getAiClient();
 
   try {
     const response = await ai.models.generateContent({
       model: MODEL_FAST,
       contents: `
-        Investigate detailed information for: ${query}. 
-        Be comprehensive and cite facts.
-        Evaluate the reliability of the sources you find implicitly.
+        Search Agent Task: Investigate "${query}". 
+        Provide detailed, factual information. 
+        Focus on answering the query directly with data.
       `,
       config: {
         tools: [{ googleSearch: {} }]
@@ -30,21 +30,12 @@ export const executeTask = async (query: string): Promise<ResearchResult> => {
       .map((c: any) => c.web?.uri)
       .filter((uri: string | undefined): uri is string => !!uri);
 
-    // Simple heuristic for quality score based on source count and content length
-    // Real quality control agent would analyze domain authority and cross-reference facts
-    const uniqueSources = Array.from(new Set(sources)) as string[];
-    let qualityScore = 70; 
-    if (uniqueSources.length > 2) qualityScore += 10;
-    if (content.length > 500) qualityScore += 10;
-    if (content.includes("http")) qualityScore += 5;
-
     return { 
       content, 
-      sources: uniqueSources,
-      qualityScore: Math.min(100, qualityScore)
+      sources: Array.from(new Set(sources))
     };
   } catch (error) {
-    console.error("Task execution failed", error);
-    return { content: "Failed to execute research task due to API error.", sources: [], qualityScore: 0 };
+    console.error("Search failed", error);
+    return { content: "Search execution failed.", sources: [] };
   }
 };

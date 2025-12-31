@@ -1,85 +1,130 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../store/appStore';
-import { planResearch } from './planner';
-import { executeTask } from './researcher';
-import { synthesizeReport } from './synthesizer';
-import { verifyFindings } from './verifier';
-import { generateSuggestions } from './suggester';
 import { TaskStatus, MessageRole } from '../types';
+
+// Core Agents
+import { planResearch } from './planner';
+import { executeTask as executeSearch } from './researcher'; // Search Agent
+import { synthesizeReport } from './synthesizer';
+import { formatReport } from './reporter';
+import { generateSuggestions } from './suggester';
+import { evaluateQuality } from './quality_control';
+
+// Supporting Agents
+import { getRelevantContext, deduplicateQuery } from './context_manager';
+import { RetryAgent } from './retry_recovery';
+import { verifyFindings } from './verifier';
+import { extractKeyData } from './extraction';
+import { generateBibliography } from './citation';
+
+// Enhancement Agents
+import { detectTrends } from './trend_detector';
+import { analyzeData } from './data_analysis';
+import { translateContent } from './multilanguage';
 
 export const startResearchProcess = async (sessionId: string, userGoal: string) => {
   const store = useStore.getState();
 
   try {
-    // 1. Planner Agent
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Plan: Analyzing request and generating tasks...");
+    const session = store.sessions.find(s => s.id === sessionId);
+    const context = getRelevantContext(session?.messages || []);
+    const settings = store.userSettings;
+
+    // 1. Context Manager & Planner
+    await store.addMessage(sessionId, MessageRole.SYSTEM, "Orchestrator: Initializing agents...");
     
-    const plan = await planResearch(userGoal);
+    const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings), "Planning");
+    
     const tasks = plan.tasks.map(t => ({
       id: uuidv4(),
       title: t.title,
       description: t.description,
-      query: t.query,
+      query: deduplicateQuery(t.query, []), // Simple dedupe for now
       status: TaskStatus.PENDING,
       sourceUrls: [],
       qualityScore: 0
     }));
 
     await store.updateSessionTasks(sessionId, tasks);
-    await store.addMessage(sessionId, MessageRole.SYSTEM, `Plan: Generated ${tasks.length} tasks. Handing off to Research Agent.`);
+    await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks.`);
 
-    // 2. Research & QC Agent
     const findingsAccumulator: { task: string; result: string }[] = [];
+    const allSources: string[] = [];
 
+    // 2. Research Loop
     for (const task of tasks) {
       await store.updateTaskStatus(sessionId, task.id, TaskStatus.IN_PROGRESS);
       
-      const result = await executeTask(task.query);
+      // Search Agent (with Retry)
+      const searchResult = await RetryAgent.run(() => executeSearch(task.query), "Search");
       
-      // 3. Verification Agent (NEW)
-      const verification = await verifyFindings(task.title, result.content, result.sources);
+      // Quality Control Agent
+      const quality = await evaluateQuality(searchResult.content, searchResult.sources);
       
+      // Verification Agent
+      const verification = await verifyFindings(task.title, searchResult.content, searchResult.sources);
+      
+      // Extraction Agent (Background, log for now)
+      // const structuredData = await extractKeyData(searchResult.content);
+
+      allSources.push(...searchResult.sources);
+      findingsAccumulator.push({ task: task.title, result: searchResult.content });
+
       await store.updateTaskStatus(
         sessionId, 
         task.id, 
         TaskStatus.COMPLETED, 
-        result.content,
-        result.sources,
+        searchResult.content,
+        searchResult.sources,
         verification
       );
-
-      findingsAccumulator.push({ task: task.title, result: result.content });
     }
 
-    // 4. Synthesis Agent
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Synthesis: All tasks completed. Synthesizing final report...");
-    const finalReport = await synthesizeReport(userGoal, findingsAccumulator);
+    await store.addMessage(sessionId, MessageRole.SYSTEM, "Research Orchestrator: Tasks complete. Analyzing data...");
+
+    // 3. Post-Processing & Enhancement
     
+    // Trend Detector Agent
+    const trends = await detectTrends(findingsAccumulator.map(f => f.result));
+    
+    // Synthesis Agent
+    const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings);
+    
+    // Report Agent (Formatting)
+    const formattedReport = await formatReport(rawSynthesis, 'academic'); // Default to academic structure
+    
+    // Multi-Language Agent (Translation if needed)
+    const finalContent = await translateContent(formattedReport, settings.language);
+    
+    // Citation Agent
+    const bibliography = generateBibliography(Array.from(new Set(allSources)));
+    
+    const finalReport = `${finalContent}\n\n## References\n${bibliography}`;
+
     await store.setSynthesis(sessionId, finalReport);
-    
-    // 5. Suggestion Agent (NEW)
-    const suggestions = await generateSuggestions(finalReport);
-    
-    const finalMessageId = uuidv4();
-    // Manually add message to include suggestions
-    const session = await import('../database/db').then(m => m.db.sessions.get(sessionId));
-    if (session) {
-        const newMessage = {
-            id: finalMessageId,
-            role: MessageRole.MODEL,
-            content: finalReport,
-            timestamp: Date.now(),
-            suggestions: suggestions
-        };
-        const updatedSession = { ...session, messages: [...session.messages, newMessage], updatedAt: Date.now() };
-        await import('../database/db').then(m => m.db.sessions.put(updatedSession));
-        store.loadSession(sessionId); // Force reload state
-    }
 
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Report generated. Click 'View Report' to export.");
+    // Suggestion Agent
+    const suggestions = await generateSuggestions(finalContent);
+
+    // Final Output
+    await store.addMessage(
+      sessionId, 
+      MessageRole.MODEL, 
+      `## Research Complete\n\nI have finished researching "${userGoal}".\n\n**Summary of Findings:**\n${trends}\n\nA detailed report has been generated. You can view it using the "View Report" button.`,
+      suggestions
+    );
 
   } catch (error) {
-    console.error("Research Process Failed", error);
-    await store.addMessage(sessionId, MessageRole.SYSTEM, `Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error("Research Orchestrator failed:", error);
+    await store.addMessage(sessionId, MessageRole.SYSTEM, "System Error: The research process encountered an unexpected error.");
+    
+    // Mark remaining tasks as failed
+    const session = store.sessions.find(s => s.id === sessionId);
+    if (session) {
+      const failedTasks = session.tasks.filter(t => t.status === TaskStatus.PENDING || t.status === TaskStatus.IN_PROGRESS);
+      for (const task of failedTasks) {
+        await store.updateTaskStatus(sessionId, task.id, TaskStatus.FAILED);
+      }
+    }
   }
 };
