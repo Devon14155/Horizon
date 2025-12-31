@@ -71,11 +71,31 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('SW registered: ', registration);
-          }).catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-          });
+          try {
+            // Check protocol to avoid constructing URL on 'about:blank' or 'data:' schemes
+            if (!window.location.protocol.startsWith('http')) {
+              console.warn('Service Worker skipped: Non-HTTP protocol detected.');
+              return;
+            }
+
+            // Using strict relative URL resolution based on window.location to match current origin
+            const swUrl = new URL('./sw.js', window.location.href).href;
+            
+            navigator.serviceWorker.register(swUrl)
+              .then(registration => {
+                console.log('SW registered: ', registration);
+              })
+              .catch(registrationError => {
+                // Silence specific origin errors in preview environments if they persist
+                if (registrationError.message && registrationError.message.includes('origin')) {
+                  console.warn('SW Registration: Origin mismatch (likely preview environment). Offline features may be limited.');
+                } else {
+                  console.log('SW registration failed: ', registrationError);
+                }
+              });
+          } catch (e) {
+            console.warn('Service Worker initialization failed:', e);
+          }
         });
       }
     </script>

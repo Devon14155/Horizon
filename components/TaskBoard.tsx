@@ -9,6 +9,14 @@ interface TaskBoardProps {
 export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks }) => {
   if (tasks.length === 0) return null;
 
+  const getHostname = (url: string) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch (e) {
+      return url;
+    }
+  };
+
   return (
     <div className="bg-horizon-800/50 rounded-xl border border-horizon-700 overflow-hidden mb-6">
       <div className="p-4 bg-horizon-800 border-b border-horizon-700 flex justify-between items-center">
@@ -55,7 +63,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks }) => {
                         className="flex items-center gap-1 text-[10px] bg-horizon-900 px-2 py-1 rounded text-horizon-400 hover:text-white transition-colors"
                       >
                         <ExternalLink size={10} />
-                        {new URL(url).hostname.replace('www.', '')}
+                        {getHostname(url)}
                       </a>
                     ))}
                   </div>
