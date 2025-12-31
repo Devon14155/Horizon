@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../store/appStore';
-import { TaskStatus, MessageRole, Source, ToolMode } from '../types';
+import { TaskStatus, MessageRole, Source, ToolMode, ResearchTask } from '../types';
 
 // Core Agents
 import { planResearch, PlanResult } from './planner'; // Agent 1
@@ -31,6 +31,7 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     const settings = store.userSettings;
 
     // --- PHASE 1: PLANNING ---
+    store.setLoadingStatus("Deconstructing research goal...");
     await store.addMessage(sessionId, MessageRole.SYSTEM, `Orchestrator: Initializing ${toolMode === 'web' ? 'Quick' : 'Deep'} Research System...`);
     
     // Agent 1: Task Planner with Graceful Degradation
@@ -54,7 +55,7 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     // Agent 8: Deduplication (using existing session tasks as history)
     const previousQueries = session?.tasks.map(t => t.query) || [];
     
-    const tasks = plan.tasks.map(t => ({
+    const tasks: ResearchTask[] = plan.tasks.map(t => ({
       id: uuidv4(),
       title: t.title,
       description: t.description,
@@ -75,9 +76,10 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     const allSources: Source[] = [];
 
     // --- PHASE 2: EXECUTION & VERIFICATION (PARALLELIZED) ---
+    store.setLoadingStatus("Executing research tasks...");
     
     // Define the unit of work for a single task
-    const processTask = async (task: any) => {
+    const processTask = async (task: ResearchTask) => {
       await store.updateTaskStatus(sessionId, task.id, TaskStatus.IN_PROGRESS);
       
       // Agent 2: Search Agent
@@ -110,6 +112,8 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     const BATCH_SIZE = 3;
     for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
       const batch = tasks.slice(i, i + BATCH_SIZE);
+      store.setLoadingStatus(`Processing tasks ${i + 1}-${Math.min(i + BATCH_SIZE, tasks.length)} of ${tasks.length}...`);
+      
       const batchResults = await Promise.all(batch.map(task => processTask(task)));
 
       // Process results from the batch
@@ -131,6 +135,7 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     await store.addMessage(sessionId, MessageRole.SYSTEM, "Research Orchestrator: Analysis complete. Synthesizing report...");
 
     // --- PHASE 3: SYNTHESIS & ENHANCEMENT ---
+    store.setLoadingStatus("Analyzing cross-source trends...");
     
     // Agent 14: Trend Detector
     const trends = await detectTrends(findingsAccumulator.map(f => f.result));
@@ -141,9 +146,11 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     
     // Agent 5: Synthesis Agent
     // Pass toolMode to enable thinking budget in synthesis
+    store.setLoadingStatus("Synthesizing final report...");
     const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings, toolMode);
     
     // Agent 6: Report Agent
+    store.setLoadingStatus("Formatting document...");
     const formattedReport = await formatReport(rawSynthesis, 'academic', settings);
     
     // Agent 16: Multi-Language Agent
@@ -169,8 +176,11 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
       suggestions
     );
 
+    store.setLoadingStatus(null);
+
   } catch (error) {
     console.error("Research Orchestrator failed:", error);
+    store.setLoadingStatus(null);
     await store.addMessage(sessionId, MessageRole.SYSTEM, "System Error: The research process encountered an unexpected error.");
     
     const session = store.sessions.find(s => s.id === sessionId);

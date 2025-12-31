@@ -8,7 +8,7 @@ import { TaskBoard } from './TaskBoard';
 import { ReportView } from './ReportView';
 
 export const ChatArea: React.FC = () => {
-  const { currentSessionId, sessions, addMessage, createSession, toggleSidebar, sidebarOpen, setShowReportView } = useStore();
+  const { currentSessionId, sessions, addMessage, createSession, toggleSidebar, sidebarOpen, setShowReportView, loadingStatus } = useStore();
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -23,7 +23,7 @@ export const ChatArea: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [currentSession?.messages, currentSession?.tasks]);
+  }, [currentSession?.messages, currentSession?.tasks, loadingStatus]);
 
   const processInput = async (text: string) => {
     if (!text.trim() || isProcessing) return;
@@ -341,13 +341,16 @@ export const ChatArea: React.FC = () => {
           </div>
         )}
 
-        {isProcessing && (
-           <div className="flex justify-center items-center py-4">
+        {(isProcessing || loadingStatus) && (
+           <div className="flex justify-center items-center py-4 gap-3">
              <div className="flex space-x-2 bg-white dark:bg-horizon-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-horizon-700">
                <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce"></div>
              </div>
+             {loadingStatus && (
+               <span className="text-sm text-slate-500 dark:text-slate-400 font-medium animate-pulse">{loadingStatus}</span>
+             )}
            </div>
         )}
         <div ref={messagesEndRef} />

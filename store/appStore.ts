@@ -16,6 +16,7 @@ interface StoreActions {
   setShowReportView: (show: boolean) => void;
   updateSettings: (settings: Partial<UserSettings>) => void;
   deleteSession: (id: string) => Promise<void>;
+  setLoadingStatus: (status: string | null) => void;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -28,6 +29,7 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
   currentSessionId: null,
   sessions: [],
   isLoading: false,
+  loadingStatus: null,
   activeTask: null,
   sidebarOpen: true,
   settingsOpen: false,
@@ -162,5 +164,7 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
     await db.sessions.delete(id);
     const sessions = await db.sessions.orderBy('updatedAt').reverse().toArray();
     set({ sessions, currentSessionId: null });
-  }
+  },
+  
+  setLoadingStatus: (status) => set({ loadingStatus: status })
 }));

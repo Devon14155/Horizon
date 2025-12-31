@@ -76,6 +76,7 @@ export interface AppState {
   currentSessionId: string | null;
   sessions: ResearchSession[];
   isLoading: boolean;
+  loadingStatus: string | null;
   activeTask: string | null;
   sidebarOpen: boolean;
   settingsOpen: boolean;
