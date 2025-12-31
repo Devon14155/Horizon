@@ -59,6 +59,13 @@
       .prose { color: #334155; }
       .dark .prose { color: #cbd5e1; }
       
+      /* Code Blocks */
+      .prose pre { background-color: #1e293b; color: #e2e8f0; border-radius: 0.5rem; }
+      .dark .prose pre { background-color: #020617; border: 1px solid #1e293b; }
+      .prose code { color: #ef4444; font-weight: 500; }
+      .dark .prose code { color: #f472b6; }
+      .prose pre code { color: inherit; }
+
       /* Table Styles for GFM */
       .prose table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 1em; margin-bottom: 1em; }
       .prose th { border-bottom: 1px solid #e2e8f0; font-weight: 600; padding: 0.5em; background-color: #f8fafc; }
@@ -81,7 +88,8 @@
     "zustand": "https://esm.sh/zustand@^5.0.9",
     "jspdf": "https://esm.sh/jspdf@2.5.1",
     "html2canvas": "https://esm.sh/html2canvas@1.4.1",
-    "docx": "https://esm.sh/docx@8.5.0"
+    "docx": "https://esm.sh/docx@8.5.0",
+    "framer-motion": "https://esm.sh/framer-motion@11.0.8"
   }
 }
 </script>
