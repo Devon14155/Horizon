@@ -62,8 +62,7 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
       query: deduplicateQuery(t.query, previousQueries), 
       status: TaskStatus.PENDING,
       sourceUrls: [],
-      sources: [],
-      qualityScore: 0
+      sources: []
     }));
 
     await store.updateSessionTasks(sessionId, tasks);
@@ -104,7 +103,8 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
         taskId: task.id,
         content: searchResult.content,
         sources: searchResult.sources,
-        verification
+        verification,
+        quality
       };
     };
 
@@ -127,7 +127,8 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
           TaskStatus.COMPLETED, 
           res.content, 
           res.sources, 
-          res.verification
+          res.verification,
+          res.quality
         );
       }
     }

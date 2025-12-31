@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings, VerificationResult, Source } from '../types';
+import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings, VerificationResult, Source, QualityMetrics } from '../types';
 import { db } from '../database/db';
 
 interface StoreActions {
@@ -9,7 +9,7 @@ interface StoreActions {
   loadSession: (id: string) => Promise<void>;
   addMessage: (sessionId: string, role: MessageRole, content: string, suggestions?: string[]) => Promise<void>;
   updateSessionTasks: (sessionId: string, tasks: ResearchTask[]) => Promise<void>;
-  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: Source[], verification?: VerificationResult) => Promise<void>;
+  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: Source[], verification?: VerificationResult, quality?: QualityMetrics) => Promise<void>;
   setSynthesis: (sessionId: string, report: string) => Promise<void>;
   toggleSidebar: () => void;
   toggleSettings: () => void;
@@ -110,7 +110,7 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
     set({ sessions: sessions.map(s => s.id === sessionId ? updatedSession : s) });
   },
 
-  updateTaskStatus: async (sessionId, taskId, status, findings, sources, verification) => {
+  updateTaskStatus: async (sessionId, taskId, status, findings, sources, verification, quality) => {
     const session = await db.sessions.get(sessionId);
     if (!session) return;
 
@@ -122,7 +122,8 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
           findings: findings || t.findings,
           sources: sources ? [...(t.sources || []), ...sources] : t.sources,
           sourceUrls: sources ? [...(t.sourceUrls || []), ...sources.map(s => s.url)] : t.sourceUrls,
-          verification: verification || t.verification
+          verification: verification || t.verification,
+          quality: quality || t.quality
         };
       }
       return t;

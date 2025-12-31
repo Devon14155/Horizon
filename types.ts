@@ -20,6 +20,12 @@ export interface VerificationResult {
   correction?: string;
 }
 
+export interface QualityMetrics {
+  score: number;
+  issues: string[];
+  isAcceptable: boolean;
+}
+
 export interface Source {
   url: string;
   title: string;
@@ -34,7 +40,7 @@ export interface ResearchTask {
   findings?: string;
   sourceUrls?: string[];
   sources?: Source[];
-  qualityScore?: number; // 0-100
+  quality?: QualityMetrics;
   verification?: VerificationResult;
 }
 
