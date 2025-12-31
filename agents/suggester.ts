@@ -1,5 +1,6 @@
-import { Type } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
+import { withRetry } from "../utils/retry";
 
 export const generateSuggestions = async (context: string): Promise<string[]> => {
   const ai = getAiClient();
@@ -18,7 +19,7 @@ export const generateSuggestions = async (context: string): Promise<string[]> =>
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await withRetry<GenerateContentResponse>(() => ai.models.generateContent({
       model: MODEL_FAST,
       contents: prompt,
       config: {
@@ -33,12 +34,46 @@ export const generateSuggestions = async (context: string): Promise<string[]> =>
           }
         }
       }
-    });
+    }));
     
     const data = JSON.parse(response.text || "{}");
     return data.suggestions || [];
   } catch (error) {
-    // Fallback suggestions
-    return ["Tell me more about the key trends", "Explain the technical details", "Generate a PDF report"];
+    console.warn("Suggestion Agent failed, using heuristic fallback.", error);
+    
+    // Heuristic Fallback Logic
+    const fallbacks: string[] = [];
+    const lowerContext = context.toLowerCase();
+
+    // Context-aware additions
+    if (lowerContext.includes("trend") || lowerContext.includes("future")) {
+        fallbacks.push("What are the long-term implications?");
+    }
+    if (lowerContext.includes("cost") || lowerContext.includes("economic") || lowerContext.includes("price")) {
+        fallbacks.push("Is there a cost-benefit analysis?");
+    }
+    if (lowerContext.includes("problem") || lowerContext.includes("issue") || lowerContext.includes("challenge")) {
+        fallbacks.push("What are the proposed solutions?");
+    }
+    if (lowerContext.includes("technology") || lowerContext.includes("algorithm") || lowerContext.includes("system")) {
+        fallbacks.push("How does this compare to alternatives?");
+    }
+
+    // Standard research follow-ups to fill the quota
+    const defaults = [
+        "Identify potential biases in this research", 
+        "What are the key counter-arguments?", 
+        "Find more recent statistical data",
+        "Generate a detailed PDF report"
+    ];
+
+    // Merge and deduplicate
+    for (const def of defaults) {
+        if (fallbacks.length < 3) {
+            fallbacks.push(def);
+        }
+    }
+
+    return fallbacks.slice(0, 3);
   }
 };

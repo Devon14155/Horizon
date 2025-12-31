@@ -1,5 +1,6 @@
-import { Type } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
+import { withRetry } from "../utils/retry";
 
 export interface QualityResult {
   score: number;
@@ -29,7 +30,7 @@ export const evaluateQuality = async (content: string, sources: string[]): Promi
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await withRetry<GenerateContentResponse>(() => ai.models.generateContent({
       model: MODEL_FAST,
       contents: prompt,
       config: {
@@ -43,7 +44,7 @@ export const evaluateQuality = async (content: string, sources: string[]): Promi
           }
         }
       }
-    });
+    }));
 
     const text = response.text || "{}";
     const result = JSON.parse(text);
@@ -53,11 +54,25 @@ export const evaluateQuality = async (content: string, sources: string[]): Promi
         isAcceptable: result.isAcceptable ?? true
     };
   } catch (error) {
-    // Fallback heuristic
+    console.warn("QC Agent failed, using heuristic fallback.", error);
+
+    // Robust Heuristic Calculation
+    // 1. Length Score: Up to 50 points (approx 1 point per 50 chars, maxing at 2500 chars)
+    const lengthScore = Math.min(Math.floor(content.length / 50), 50);
+    
+    // 2. Source Score: Up to 50 points (10 points per source, maxing at 5 sources)
+    const sourceScore = Math.min(sources.length * 10, 50);
+    
+    const totalScore = lengthScore + sourceScore;
+    
+    // Determine acceptability (Threshold: 40)
+    // Example: 2 sources (20pts) + 1000 chars (20pts) = 40 (Pass)
+    const isAcceptable = totalScore >= 40;
+
     return { 
-        score: sources.length * 20, 
-        issues: ["Automated QC failed, using heuristic"], 
-        isAcceptable: true 
+        score: totalScore, 
+        issues: ["Automated QC failed. Score calculated via heuristic (Length + Sources)."], 
+        isAcceptable: isAcceptable 
     };
   }
 };
