@@ -3,24 +3,25 @@ import { useStore } from '../store/appStore';
 import { TaskStatus, MessageRole } from '../types';
 
 // Core Agents
-import { planResearch } from './planner';
-import { executeTask as executeSearch } from './researcher'; // Search Agent
-import { synthesizeReport } from './synthesizer';
-import { formatReport } from './reporter';
-import { generateSuggestions } from './suggester';
-import { evaluateQuality } from './quality_control';
+import { planResearch } from './planner'; // Agent 1
+import { executeSearch } from './search'; // Agent 2 (Replaced researcher.ts)
+import { synthesizeReport } from './synthesizer'; // Agent 5
+import { formatReport } from './reporter'; // Agent 6
+import { generateSuggestions } from './suggester'; // Agent 7
+import { evaluateQuality } from './quality_control'; // Agent 4
 
 // Supporting Agents
-import { getRelevantContext, deduplicateQuery } from './context_manager';
-import { RetryAgent } from './retry_recovery';
-import { verifyFindings } from './verifier';
-import { extractKeyData } from './extraction';
-import { generateBibliography } from './citation';
+import { getRelevantContext, deduplicateQuery } from './context_manager'; // Agent 8
+import { RetryAgent } from './retry_recovery'; // Agent 10
+import { verifyFindings } from './verifier'; // Agent 9
+import { extractKeyData } from './extraction'; // Agent 11
+import { generateBibliography } from './citation'; // Agent 12
 
 // Enhancement Agents
-import { detectTrends } from './trend_detector';
-import { analyzeData } from './data_analysis';
-import { translateContent } from './multilanguage';
+import { detectTrends } from './trend_detector'; // Agent 14
+import { analyzeData } from './data_analysis'; // Agent 15
+import { translateContent } from './multilanguage'; // Agent 16
+// Personalization (Agent 13) is used inside Planner and Synthesizer
 
 export const startResearchProcess = async (sessionId: string, userGoal: string) => {
   const store = useStore.getState();
@@ -30,46 +31,51 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     const context = getRelevantContext(session?.messages || []);
     const settings = store.userSettings;
 
-    // 1. Context Manager & Planner
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Orchestrator: Initializing agents...");
+    // --- PHASE 1: PLANNING ---
+    await store.addMessage(sessionId, MessageRole.SYSTEM, "Orchestrator: Initializing 16-Agent System...");
     
+    // Agent 1: Task Planner
     const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings), "Planning");
     
     const tasks = plan.tasks.map(t => ({
       id: uuidv4(),
       title: t.title,
       description: t.description,
-      query: deduplicateQuery(t.query, []), // Simple dedupe for now
+      query: deduplicateQuery(t.query, []), // Agent 8: Context Manager (Deduplication)
       status: TaskStatus.PENDING,
       sourceUrls: [],
       qualityScore: 0
     }));
 
     await store.updateSessionTasks(sessionId, tasks);
-    await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks.`);
+    await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks based on '${settings.expertiseLevel}' profile.`);
 
     const findingsAccumulator: { task: string; result: string }[] = [];
     const allSources: string[] = [];
 
-    // 2. Research Loop
+    // --- PHASE 2: EXECUTION & VERIFICATION ---
     for (const task of tasks) {
       await store.updateTaskStatus(sessionId, task.id, TaskStatus.IN_PROGRESS);
       
-      // Search Agent (with Retry)
+      // Agent 2: Search Agent
       const searchResult = await RetryAgent.run(() => executeSearch(task.query), "Search");
       
-      // Quality Control Agent
+      // Agent 4: Quality Control
       const quality = await evaluateQuality(searchResult.content, searchResult.sources);
       
-      // Verification Agent
+      // Agent 9: Verification Agent
       const verification = await verifyFindings(task.title, searchResult.content, searchResult.sources);
       
-      // Extraction Agent (Background, log for now)
-      // const structuredData = await extractKeyData(searchResult.content);
+      // Agent 11: Extraction Agent (Extract structured data for potential future use)
+      const structuredData = await extractKeyData(searchResult.content);
+      if (Object.keys(structuredData).length > 0) {
+        console.log(`[Extraction Agent] Extracted data for ${task.title}`, structuredData);
+      }
 
       allSources.push(...searchResult.sources);
       findingsAccumulator.push({ task: task.title, result: searchResult.content });
 
+      // Update UI with status and verification results
       await store.updateTaskStatus(
         sessionId, 
         task.id, 
@@ -80,37 +86,41 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
       );
     }
 
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Research Orchestrator: Tasks complete. Analyzing data...");
+    await store.addMessage(sessionId, MessageRole.SYSTEM, "Research Orchestrator: Analysis complete. Synthesizing report...");
 
-    // 3. Post-Processing & Enhancement
+    // --- PHASE 3: SYNTHESIS & ENHANCEMENT ---
     
-    // Trend Detector Agent
+    // Agent 14: Trend Detector
     const trends = await detectTrends(findingsAccumulator.map(f => f.result));
     
-    // Synthesis Agent
+    // Agent 15: Data Analysis (Check for charts)
+    const combinedText = findingsAccumulator.map(f => f.result).join("\n");
+    const chartData = await analyzeData(combinedText); // Used by UI if present
+    
+    // Agent 5: Synthesis Agent
     const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings);
     
-    // Report Agent (Formatting)
-    const formattedReport = await formatReport(rawSynthesis, 'academic'); // Default to academic structure
+    // Agent 6: Report Agent
+    const formattedReport = await formatReport(rawSynthesis, 'academic', settings);
     
-    // Multi-Language Agent (Translation if needed)
+    // Agent 16: Multi-Language Agent
     const finalContent = await translateContent(formattedReport, settings.language);
     
-    // Citation Agent
+    // Agent 12: Citation Agent
     const bibliography = generateBibliography(Array.from(new Set(allSources)));
     
     const finalReport = `${finalContent}\n\n## References\n${bibliography}`;
 
     await store.setSynthesis(sessionId, finalReport);
 
-    // Suggestion Agent
+    // Agent 7: Suggestion Agent
     const suggestions = await generateSuggestions(finalContent);
 
     // Final Output
     await store.addMessage(
       sessionId, 
       MessageRole.MODEL, 
-      `## Research Complete\n\nI have finished researching "${userGoal}".\n\n**Summary of Findings:**\n${trends}\n\nA detailed report has been generated. You can view it using the "View Report" button.`,
+      `## Research Complete\n\nI have finished researching "${userGoal}".\n\n**Key Trends Identified:**\n${trends}\n\nA detailed report has been generated. You can view it using the "View Report" button.`,
       suggestions
     );
 

@@ -5,24 +5,28 @@ import { VerificationResult } from "../types";
 export const verifyFindings = async (task: string, findings: string, sources: string[]): Promise<VerificationResult> => {
   const ai = getAiClient();
 
-  // If no sources, we can't verify well
   if (sources.length === 0) {
-    return { isAccurate: true, confidence: 50, correction: "No external sources to verify against." };
+    return { isAccurate: true, confidence: 50, correction: "No external sources available for cross-verification." };
   }
 
   const prompt = `
-    You are a Fact Verification Agent.
-    Task: "${task}"
-    Findings to Verify: "${findings.substring(0, 1000)}..."
-    Sources Used: ${sources.join(', ')}
-
-    Analyze the findings for potential hallucinations, logical inconsistencies, or lack of citation support.
+    ROLE: Verification Agent
+    TASK: Verify the accuracy of research findings against the task and implied source credibility.
     
-    Return a JSON object:
+    RESEARCH TASK: "${task}"
+    FINDINGS: "${findings.substring(0, 1500)}..."
+    SOURCE COUNT: ${sources.length}
+    
+    ANALYSIS REQUIRED:
+    1. Cross-check facts for consistency.
+    2. Detect potential hallucinations or unsupported claims.
+    3. Check for contradictions within the text.
+    
+    OUTPUT JSON:
     {
       "isAccurate": boolean,
       "confidence": number (0-100),
-      "correction": string (optional correction or warning if confidence is low)
+      "correction": string (Short note on any issues found, or 'Verified' if good)
     }
   `;
 
@@ -46,7 +50,7 @@ export const verifyFindings = async (task: string, findings: string, sources: st
     const text = response.text || "{}";
     return JSON.parse(text);
   } catch (error) {
-    console.error("Verification failed", error);
-    return { isAccurate: true, confidence: 0 };
+    console.error("Verification Agent failed", error);
+    return { isAccurate: true, confidence: 0, correction: "Verification process failed." };
   }
 };
