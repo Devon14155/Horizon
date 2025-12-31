@@ -5,14 +5,23 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { useStore } from './store/appStore';
 
 function App() {
-  const init = useStore(state => state.init);
+  const { init, userSettings } = useStore();
 
   useEffect(() => {
     init();
   }, [init]);
 
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (userSettings.theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [userSettings.theme]);
+
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-horizon-900 text-slate-50">
+    <div className="flex w-full h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-horizon-900 dark:text-slate-50 transition-colors duration-300">
       <Sidebar />
       <ChatArea />
       <SettingsPanel />

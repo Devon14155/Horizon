@@ -36,16 +36,28 @@
       }
     </script>
     <style>
-      body { background-color: #0f172a; color: #f8fafc; }
+      /* Styles here now support light/dark classes via Tailwind where possible */
       ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #1e293b; }
-      ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-      .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-      .prose h1, .prose h2, .prose h3 { color: #f1f5f9; }
-      .prose strong { color: #e2e8f0; }
-      .prose a { color: #60a5fa; }
-      .prose blockquote { border-left-color: #3b82f6; color: #94a3b8; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      .dark ::-webkit-scrollbar-thumb { background: #475569; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      
+      .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.05); }
+      .dark .glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+      
+      /* Prose colors override for dark mode */
+      .prose h1, .prose h2, .prose h3 { color: #1e293b; }
+      .dark .prose h1, .dark .prose h2, .dark .prose h3 { color: #f1f5f9; }
+      .prose strong { color: #334155; }
+      .dark .prose strong { color: #e2e8f0; }
+      .prose a { color: #2563eb; }
+      .dark .prose a { color: #60a5fa; }
+      .prose blockquote { border-left-color: #3b82f6; color: #64748b; }
+      .dark .prose blockquote { color: #94a3b8; }
+      .prose { color: #334155; }
+      .dark .prose { color: #cbd5e1; }
     </style>
   <script type="importmap">
 {
@@ -72,21 +84,16 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           try {
-            // Check protocol to avoid constructing URL on 'about:blank' or 'data:' schemes
             if (!window.location.protocol.startsWith('http')) {
               console.warn('Service Worker skipped: Non-HTTP protocol detected.');
               return;
             }
-
-            // Using strict relative URL resolution based on window.location to match current origin
             const swUrl = new URL('./sw.js', window.location.href).href;
-            
             navigator.serviceWorker.register(swUrl)
               .then(registration => {
                 console.log('SW registered: ', registration);
               })
               .catch(registrationError => {
-                // Silence specific origin errors in preview environments if they persist
                 if (registrationError.message && registrationError.message.includes('origin')) {
                   console.warn('SW Registration: Origin mismatch (likely preview environment). Offline features may be limited.');
                 } else {

@@ -52,14 +52,14 @@ export const ChatArea: React.FC = () => {
 
   if (!currentSessionId && sessions.length === 0) {
      return (
-       <div className="flex-1 flex flex-col items-center justify-center bg-horizon-900 text-gray-400 p-8">
+       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-horizon-900 text-gray-500 dark:text-gray-400 p-8">
          <div className="mb-6 relative">
-            <div className="w-20 h-20 rounded-full bg-horizon-500/20 flex items-center justify-center animate-pulse">
-               <Bot size={40} className="text-horizon-400" />
+            <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-horizon-500/20 flex items-center justify-center animate-pulse">
+               <Bot size={40} className="text-blue-500 dark:text-horizon-400" />
             </div>
          </div>
-         <h2 className="text-4xl font-mono text-white mb-4 tracking-tighter">HORIZON</h2>
-         <p className="text-center max-w-md mb-8">
+         <h2 className="text-4xl font-mono text-slate-800 dark:text-white mb-4 tracking-tighter">HORIZON</h2>
+         <p className="text-center max-w-md mb-8 text-gray-600 dark:text-gray-400">
            AI-powered research assistant grounded in real-time data.
            Plan. Execute. Verify. Synthesize.
          </p>
@@ -69,7 +69,7 @@ export const ChatArea: React.FC = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Enter a research topic..."
-              className="w-full bg-horizon-800 border border-horizon-700 rounded-xl px-4 py-4 pr-12 text-white focus:outline-none focus:border-horizon-500 shadow-xl"
+              className="w-full bg-white dark:bg-horizon-800 border border-gray-200 dark:border-horizon-700 rounded-xl px-4 py-4 pr-12 text-slate-900 dark:text-white focus:outline-none focus:border-horizon-500 shadow-xl"
             />
             <button type="submit" className="absolute right-3 top-3 p-1 bg-horizon-500 rounded-lg text-white hover:bg-horizon-400 transition-colors">
               <Send size={20} />
@@ -80,11 +80,11 @@ export const ChatArea: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-horizon-900 relative">
+    <div className="flex-1 flex flex-col h-screen bg-slate-50 dark:bg-horizon-900 relative transition-colors duration-300">
       <ReportView />
       
       {!sidebarOpen && (
-        <button onClick={toggleSidebar} className="absolute top-4 left-4 z-10 text-horizon-400 hover:text-white bg-horizon-800 p-2 rounded-lg border border-horizon-700">
+        <button onClick={toggleSidebar} className="absolute top-4 left-4 z-10 text-gray-500 dark:text-horizon-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-horizon-800 p-2 rounded-lg border border-gray-200 dark:border-horizon-700 shadow-sm">
           <Menu size={20} />
         </button>
       )}
@@ -106,7 +106,7 @@ export const ChatArea: React.FC = () => {
           <div key={msg.id} className="space-y-3">
             <div className={`flex gap-4 ${msg.role === MessageRole.USER ? 'justify-end' : 'justify-start'}`}>
               {msg.role !== MessageRole.USER && (
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === MessageRole.SYSTEM ? 'bg-orange-500/20 text-orange-400' : 'bg-horizon-500/20 text-horizon-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === MessageRole.SYSTEM ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400' : 'bg-blue-100 text-blue-600 dark:bg-horizon-500/20 dark:text-horizon-400'}`}>
                   <Bot size={16} />
                 </div>
               )}
@@ -115,17 +115,17 @@ export const ChatArea: React.FC = () => {
                 msg.role === MessageRole.USER 
                   ? 'bg-horizon-500 text-white' 
                   : msg.role === MessageRole.SYSTEM 
-                    ? 'bg-transparent text-gray-500 text-sm border border-dashed border-gray-700 font-mono'
-                    : 'bg-horizon-800 text-gray-100 border border-horizon-700 shadow-sm'
+                    ? 'bg-transparent text-gray-500 text-sm border border-dashed border-gray-300 dark:border-gray-700 font-mono'
+                    : 'bg-white dark:bg-horizon-800 text-slate-800 dark:text-gray-100 border border-gray-200 dark:border-horizon-700 shadow-sm'
               }`}>
-                <div className="prose prose-invert prose-sm max-w-none">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               </div>
 
               {msg.role === MessageRole.USER && (
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
-                  <User size={16} className="text-gray-300" />
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                  <User size={16} className="text-gray-500 dark:text-gray-300" />
                 </div>
               )}
             </div>
@@ -137,9 +137,9 @@ export const ChatArea: React.FC = () => {
                   <button 
                     key={i}
                     onClick={() => handleSuggestionClick(sugg)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-horizon-800 border border-horizon-700 hover:border-horizon-500 hover:text-white text-xs text-gray-400 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-horizon-800 border border-gray-200 dark:border-horizon-700 hover:border-horizon-500 dark:hover:border-horizon-500 hover:text-horizon-500 dark:hover:text-white text-xs text-gray-500 dark:text-gray-400 transition-all shadow-sm"
                   >
-                    <Sparkles size={12} className="text-horizon-400" />
+                    <Sparkles size={12} className="text-horizon-500 dark:text-horizon-400" />
                     {sugg}
                   </button>
                 ))}
@@ -166,7 +166,7 @@ export const ChatArea: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-horizon-900 border-t border-horizon-800">
+      <div className="p-4 bg-slate-100 dark:bg-horizon-900 border-t border-gray-200 dark:border-horizon-800">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
           <input
             type="text"
@@ -174,12 +174,12 @@ export const ChatArea: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             disabled={isProcessing}
             placeholder={isProcessing ? "Research in progress..." : "Ask follow-up or research..."}
-            className="w-full bg-horizon-800 border border-horizon-700 rounded-xl px-4 py-4 pr-12 text-white focus:outline-none focus:border-horizon-500 shadow-xl disabled:opacity-50"
+            className="w-full bg-white dark:bg-horizon-800 border border-gray-300 dark:border-horizon-700 rounded-xl px-4 py-4 pr-12 text-slate-900 dark:text-white focus:outline-none focus:border-horizon-500 shadow-xl disabled:opacity-50"
           />
           <button 
             type="submit" 
             disabled={isProcessing || !input.trim()}
-            className="absolute right-3 top-3 p-1 bg-horizon-500 rounded-lg text-white hover:bg-horizon-400 transition-colors disabled:bg-gray-700"
+            className="absolute right-3 top-3 p-1 bg-horizon-500 rounded-lg text-white hover:bg-horizon-400 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-700"
           >
             <Send size={20} />
           </button>

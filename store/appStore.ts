@@ -19,7 +19,7 @@ interface StoreActions {
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
-  theme: 'dark',
+  theme: 'light',
   language: 'en',
   expertiseLevel: 'expert'
 };
