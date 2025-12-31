@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import { SettingsPanel } from './components/SettingsPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useStore } from './store/appStore';
 
 function App() {
@@ -21,11 +22,13 @@ function App() {
   }, [userSettings.theme]);
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-[#F8FAFC] text-slate-900 dark:bg-horizon-900 dark:text-slate-50 transition-colors duration-300 font-sans">
-      <Sidebar />
-      <ChatArea />
-      <SettingsPanel />
-    </div>
+    <ErrorBoundary>
+      <div className="flex w-full h-screen overflow-hidden bg-[#F8FAFC] text-slate-900 dark:bg-horizon-900 dark:text-slate-50 transition-colors duration-300 font-sans">
+        <Sidebar />
+        <ChatArea />
+        <SettingsPanel />
+      </div>
+    </ErrorBoundary>
   );
 }
 

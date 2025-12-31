@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/appStore';
 import { startResearchProcess } from '../agents/orchestrator';
 import { MessageRole, ToolMode } from '../types';
-import { Send, Menu, Bot, User, FileText, Sparkles, Paperclip, Mic, ArrowRight, ArrowUp, Wand2, Scale, Map, Microscope, Globe, FlaskConical, Brain, Settings, CheckCircle2, Circle } from 'lucide-react';
+import { Send, Menu, Bot, User, FileText, Sparkles, Paperclip, Mic, ArrowRight, ArrowUp, Wand2, Scale, Map, Microscope, Globe, FlaskConical, Brain, Settings, CheckCircle2, Circle, WifiOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { TaskBoard } from './TaskBoard';
 import { ReportView } from './ReportView';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export const ChatArea: React.FC = () => {
   const { currentSessionId, sessions, addMessage, createSession, toggleSidebar, sidebarOpen, setShowReportView, loadingStatus } = useStore();
@@ -14,6 +16,7 @@ export const ChatArea: React.FC = () => {
   const [showTools, setShowTools] = useState(false);
   const [selectedTool, setSelectedTool] = useState<ToolMode>('web');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isOnline = useOnlineStatus();
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
 
@@ -26,7 +29,7 @@ export const ChatArea: React.FC = () => {
   }, [currentSession?.messages, currentSession?.tasks, loadingStatus]);
 
   const processInput = async (text: string) => {
-    if (!text.trim() || isProcessing) return;
+    if (!text.trim() || isProcessing || !isOnline) return;
     
     setIsProcessing(true);
     setInput('');
@@ -46,7 +49,7 @@ export const ChatArea: React.FC = () => {
   };
 
   const handleSuggestionClick = async (suggestion: string) => {
-    if (isProcessing) return;
+    if (isProcessing || !isOnline) return;
     await processInput(suggestion);
   };
 
@@ -88,7 +91,7 @@ export const ChatArea: React.FC = () => {
              {/* Action Cards */}
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl px-4">
                 
-                <button onClick={() => processInput("Analyze key papers on...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Analyze key papers on...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
                         <FileText size={18} />
@@ -99,7 +102,7 @@ export const ChatArea: React.FC = () => {
                    <p className="text-slate-500 dark:text-slate-400 text-xs">Extract insights from literature.</p>
                 </button>
 
-                <button onClick={() => processInput("Summarize the concept of...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Summarize the concept of...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400">
                         <Sparkles size={18} />
@@ -110,7 +113,7 @@ export const ChatArea: React.FC = () => {
                    <p className="text-slate-500 dark:text-slate-400 text-xs">Get a quick overview.</p>
                 </button>
 
-                <button onClick={() => processInput("Generate a hypothesis regarding...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Generate a hypothesis regarding...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-green-50 dark:bg-green-500/10 rounded-lg text-green-600 dark:text-green-400">
                         <Wand2 size={18} />
@@ -121,7 +124,7 @@ export const ChatArea: React.FC = () => {
                    <p className="text-slate-500 dark:text-slate-400 text-xs">Generate new research questions.</p>
                 </button>
 
-                <button onClick={() => processInput("Compare the theories of...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Compare the theories of...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-lg text-orange-600 dark:text-orange-400">
                         <Scale size={18} />
@@ -132,7 +135,7 @@ export const ChatArea: React.FC = () => {
                    <p className="text-slate-500 dark:text-slate-400 text-xs">Contrast multiple viewpoints.</p>
                 </button>
 
-                <button onClick={() => processInput("Create a research plan for...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Create a research plan for...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-teal-50 dark:bg-teal-500/10 rounded-lg text-teal-600 dark:text-teal-400">
                         <Map size={18} />
@@ -143,7 +146,7 @@ export const ChatArea: React.FC = () => {
                    <p className="text-slate-500 dark:text-slate-400 text-xs">Structure your methodology.</p>
                 </button>
 
-                <button onClick={() => processInput("Critique the methodology of...")} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md">
+                <button onClick={() => processInput("Critique the methodology of...")} disabled={!isOnline} className="bg-white dark:bg-horizon-800 p-4 rounded-xl border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all text-left group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                    <div className="flex justify-between items-start mb-2">
                       <div className="p-2 bg-red-50 dark:bg-red-500/10 rounded-lg text-red-600 dark:text-red-400">
                         <Microscope size={18} />
@@ -159,24 +162,31 @@ export const ChatArea: React.FC = () => {
 
           {/* Input Area */}
           <div className="w-full max-w-4xl mx-auto px-4 pb-8 absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#F8FAFC] via-[#F8FAFC] to-transparent pt-10 dark:from-horizon-900 dark:via-horizon-900">
-             <div className="bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-slate-200 dark:border-horizon-700 p-3">
+             {!isOnline && (
+               <div className="mb-2 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm">
+                 <WifiOff size={16} />
+                 <span>You are currently offline. Research generation is paused.</span>
+               </div>
+             )}
+             <div className="bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-slate-200 dark:border-horizon-700 p-3 relative">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask anything about your research..."
-                  className="w-full bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white px-3 py-2 text-base resize-none min-h-[50px] max-h-[200px]"
+                  placeholder={isOnline ? "Ask anything about your research..." : "Offline - Check your connection"}
+                  disabled={!isOnline}
+                  className="w-full bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white px-3 py-2 text-base resize-none min-h-[50px] max-h-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
                   rows={1}
                 />
                 
                 <div className="flex justify-between items-center mt-2 px-1">
                    <div className="flex items-center gap-2">
-                      <button aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                      <button disabled={!isOnline} aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors disabled:opacity-50">
                          <Paperclip size={20} />
                       </button>
                       
                       <div className="relative">
-                        {showTools && (
+                        {showTools && isOnline && (
                             <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-gray-200 dark:border-horizon-700 p-2 z-50 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Actions</div>
                                 
@@ -213,9 +223,10 @@ export const ChatArea: React.FC = () => {
                             </div>
                         )}
                         <button 
-                             onClick={() => setShowTools(!showTools)}
+                             onClick={() => isOnline && setShowTools(!showTools)}
+                             disabled={!isOnline}
                              aria-label="Select Tool"
-                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
+                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 ${
                                 showTools 
                                 ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' 
                                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-horizon-700'
@@ -227,15 +238,15 @@ export const ChatArea: React.FC = () => {
                    </div>
                    
                    <div className="flex items-center gap-2">
-                      <button aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                      <button disabled={!isOnline} aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors disabled:opacity-50">
                          <Mic size={20} />
                       </button>
                       <button 
                         onClick={handleSubmit}
                         aria-label="Send Message"
-                        disabled={!input.trim() || isProcessing}
+                        disabled={!input.trim() || isProcessing || !isOnline}
                         className={`p-2 rounded-lg transition-colors ${
-                          input.trim() && !isProcessing
+                          input.trim() && !isProcessing && isOnline
                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
                            : 'bg-slate-100 dark:bg-horizon-700 text-slate-400 cursor-not-allowed'
                         }`}
@@ -305,7 +316,7 @@ export const ChatArea: React.FC = () => {
                     : 'bg-white dark:bg-horizon-800 text-slate-800 dark:text-gray-100 shadow-sm border border-slate-100 dark:border-horizon-700'
               }`}>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 </div>
               </div>
 
@@ -324,7 +335,8 @@ export const ChatArea: React.FC = () => {
                   <button 
                     key={i}
                     onClick={() => handleSuggestionClick(sugg)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-horizon-800 border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 text-sm text-slate-600 dark:text-slate-300 transition-all shadow-sm"
+                    disabled={!isOnline}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-horizon-800 border border-slate-200 dark:border-horizon-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 text-sm text-slate-600 dark:text-slate-300 transition-all shadow-sm disabled:opacity-50"
                   >
                     <Sparkles size={14} className="text-blue-500" />
                     {sugg}
@@ -358,24 +370,31 @@ export const ChatArea: React.FC = () => {
 
       {/* Input Area (Sticky Bottom) */}
       <div className="w-full max-w-4xl mx-auto px-4 pb-8 absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#F8FAFC] via-[#F8FAFC] to-transparent pt-10 dark:from-horizon-900 dark:via-horizon-900">
-          <div className="bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-slate-200 dark:border-horizon-700 p-3">
+          {!isOnline && (
+            <div className="mb-2 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm">
+              <WifiOff size={16} />
+              <span>You are currently offline. Research generation is paused.</span>
+            </div>
+          )}
+          <div className="bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-slate-200 dark:border-horizon-700 p-3 relative">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your research..."
-              className="w-full bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white px-3 py-2 text-base resize-none min-h-[50px] max-h-[200px]"
+              placeholder={isOnline ? "Ask anything about your research..." : "Offline - Check your connection"}
+              disabled={!isOnline}
+              className="w-full bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white px-3 py-2 text-base resize-none min-h-[50px] max-h-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
               rows={1}
             />
             
             <div className="flex justify-between items-center mt-2 px-1">
                 <div className="flex items-center gap-2">
-                  <button aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                  <button disabled={!isOnline} aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors disabled:opacity-50">
                       <Paperclip size={20} />
                   </button>
                   
                   <div className="relative">
-                    {showTools && (
+                    {showTools && isOnline && (
                         <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-gray-200 dark:border-horizon-700 p-2 z-50 animate-in fade-in slide-in-from-bottom-2">
                             <div className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Actions</div>
                             
@@ -412,9 +431,10 @@ export const ChatArea: React.FC = () => {
                         </div>
                     )}
                     <button 
-                         onClick={() => setShowTools(!showTools)}
+                         onClick={() => isOnline && setShowTools(!showTools)}
+                         disabled={!isOnline}
                          aria-label="Select Tool"
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 ${
                             showTools 
                             ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' 
                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-horizon-700'
@@ -426,15 +446,15 @@ export const ChatArea: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <button aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                  <button disabled={!isOnline} aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors disabled:opacity-50">
                       <Mic size={20} />
                   </button>
                   <button 
                     onClick={handleSubmit}
                     aria-label="Send Message"
-                    disabled={!input.trim() || isProcessing}
+                    disabled={!input.trim() || isProcessing || !isOnline}
                     className={`p-2 rounded-lg transition-colors ${
-                      input.trim() && !isProcessing
+                      input.trim() && !isProcessing && isOnline
                         ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
                         : 'bg-slate-100 dark:bg-horizon-700 text-slate-400 cursor-not-allowed'
                     }`}

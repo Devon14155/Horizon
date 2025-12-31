@@ -58,6 +58,13 @@
       .dark .prose blockquote { color: #94a3b8; }
       .prose { color: #334155; }
       .dark .prose { color: #cbd5e1; }
+      
+      /* Table Styles for GFM */
+      .prose table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 1em; margin-bottom: 1em; }
+      .prose th { border-bottom: 1px solid #e2e8f0; font-weight: 600; padding: 0.5em; background-color: #f8fafc; }
+      .dark .prose th { border-bottom: 1px solid #334155; background-color: #1e293b; color: #e2e8f0; }
+      .prose td { border-bottom: 1px solid #f1f5f9; padding: 0.5em; }
+      .dark .prose td { border-bottom: 1px solid #334155; }
     </style>
   <script type="importmap">
 {
@@ -69,6 +76,7 @@
     "uuid": "https://esm.sh/uuid@^13.0.0",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
+    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.0",
     "dexie": "https://esm.sh/dexie@^4.2.1",
     "zustand": "https://esm.sh/zustand@^5.0.9",
     "jspdf": "https://esm.sh/jspdf@2.5.1",

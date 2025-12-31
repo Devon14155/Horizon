@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/appStore';
 import { ArrowLeft, Download, FileText, File, BarChart } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { exportToPDF, exportToMarkdown } from '../tools/exportTool';
 import { exportToDOCX } from '../tools/docxTool';
 import { formatCitation, CitationStyle } from '../tools/citationTool';
@@ -102,7 +103,7 @@ export const ReportView: React.FC = () => {
           {chartData && !loadingChart && <SimpleBarChart data={chartData} />}
 
           <div className="prose prose-lg max-w-none dark:prose-invert">
-            <ReactMarkdown>{session.synthesis}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{session.synthesis}</ReactMarkdown>
           </div>
           
           {/* Enhanced Citations Section */}
