@@ -1,6 +1,6 @@
 import { Type, GenerateContentResponse } from "@google/genai";
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
-import { withRetry } from "../utils/retry";
+import { withRetry, cleanJson } from "../utils/retry";
 
 export interface QualityResult {
   score: number;
@@ -47,7 +47,7 @@ export const evaluateQuality = async (content: string, sources: string[]): Promi
     }));
 
     const text = response.text || "{}";
-    const result = JSON.parse(text);
+    const result = JSON.parse(cleanJson(text));
     return {
         score: result.score || 50,
         issues: result.issues || [],

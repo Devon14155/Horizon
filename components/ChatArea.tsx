@@ -67,7 +67,11 @@ export const ChatArea: React.FC = () => {
      return (
        <div className="flex-1 flex flex-col bg-[#F8FAFC] dark:bg-horizon-900 relative font-sans">
           {!sidebarOpen && (
-            <button onClick={toggleSidebar} className="absolute top-4 left-4 z-10 text-slate-500 p-2 rounded-lg hover:bg-white dark:hover:bg-horizon-800 transition-colors">
+            <button 
+              onClick={toggleSidebar} 
+              aria-label="Open Sidebar"
+              className="absolute top-4 left-4 z-10 text-slate-500 p-2 rounded-lg hover:bg-white dark:hover:bg-horizon-800 transition-colors"
+            >
               <Menu size={24} />
             </button>
           )}
@@ -167,7 +171,7 @@ export const ChatArea: React.FC = () => {
                 
                 <div className="flex justify-between items-center mt-2 px-1">
                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                      <button aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
                          <Paperclip size={20} />
                       </button>
                       
@@ -210,6 +214,7 @@ export const ChatArea: React.FC = () => {
                         )}
                         <button 
                              onClick={() => setShowTools(!showTools)}
+                             aria-label="Select Tool"
                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
                                 showTools 
                                 ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' 
@@ -222,11 +227,12 @@ export const ChatArea: React.FC = () => {
                    </div>
                    
                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                      <button aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
                          <Mic size={20} />
                       </button>
                       <button 
                         onClick={handleSubmit}
+                        aria-label="Send Message"
                         disabled={!input.trim() || isProcessing}
                         className={`p-2 rounded-lg transition-colors ${
                           input.trim() && !isProcessing
@@ -253,7 +259,11 @@ export const ChatArea: React.FC = () => {
       {/* Header for mobile/when sidebar closed */}
       {!sidebarOpen && (
         <div className="absolute top-4 left-4 z-10">
-           <button onClick={toggleSidebar} className="p-2 bg-white dark:bg-horizon-800 rounded-lg shadow-sm border border-slate-200 dark:border-horizon-700 text-slate-500 hover:text-slate-800 dark:text-slate-400">
+           <button 
+             onClick={toggleSidebar} 
+             aria-label="Open Sidebar"
+             className="p-2 bg-white dark:bg-horizon-800 rounded-lg shadow-sm border border-slate-200 dark:border-horizon-700 text-slate-500 hover:text-slate-800 dark:text-slate-400"
+            >
              <Menu size={20} />
            </button>
         </div>
@@ -357,7 +367,7 @@ export const ChatArea: React.FC = () => {
             
             <div className="flex justify-between items-center mt-2 px-1">
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                  <button aria-label="Attach file" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
                       <Paperclip size={20} />
                   </button>
                   
@@ -400,6 +410,7 @@ export const ChatArea: React.FC = () => {
                     )}
                     <button 
                          onClick={() => setShowTools(!showTools)}
+                         aria-label="Select Tool"
                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
                             showTools 
                             ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' 
@@ -412,11 +423,12 @@ export const ChatArea: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
+                  <button aria-label="Voice Input" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-horizon-700 rounded-lg transition-colors">
                       <Mic size={20} />
                   </button>
                   <button 
                     onClick={handleSubmit}
+                    aria-label="Send Message"
                     disabled={!input.trim() || isProcessing}
                     className={`p-2 rounded-lg transition-colors ${
                       input.trim() && !isProcessing

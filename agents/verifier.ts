@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { getAiClient, MODEL_REASONING } from "../services/geminiService";
 import { VerificationResult } from "../types";
+import { cleanJson } from "../utils/retry";
 
 export const verifyFindings = async (task: string, findings: string, sources: string[]): Promise<VerificationResult> => {
   const ai = getAiClient();
@@ -48,7 +49,7 @@ export const verifyFindings = async (task: string, findings: string, sources: st
     });
 
     const text = response.text || "{}";
-    return JSON.parse(text);
+    return JSON.parse(cleanJson(text));
   } catch (error) {
     console.error("Verification Agent failed", error);
     return { isAccurate: true, confidence: 0, correction: "Verification process failed." };

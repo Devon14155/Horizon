@@ -3,7 +3,7 @@ import { useStore } from '../store/appStore';
 import { TaskStatus, MessageRole, Source, ToolMode } from '../types';
 
 // Core Agents
-import { planResearch } from './planner'; // Agent 1
+import { planResearch, PlanResult } from './planner'; // Agent 1
 import { executeSearch } from './search'; // Agent 2
 import { synthesizeReport } from './synthesizer'; // Agent 5
 import { formatReport } from './reporter'; // Agent 6
@@ -33,9 +33,23 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     // --- PHASE 1: PLANNING ---
     await store.addMessage(sessionId, MessageRole.SYSTEM, `Orchestrator: Initializing ${toolMode === 'web' ? 'Quick' : 'Deep'} Research System...`);
     
-    // Agent 1: Task Planner
-    // Pass toolMode to allow planner to decide on task complexity (1 task for web, 3-6 for research/thinking)
-    const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings, toolMode), "Planning");
+    // Agent 1: Task Planner with Graceful Degradation
+    let plan: PlanResult;
+    try {
+      // Pass toolMode to allow planner to decide on task complexity
+      plan = await RetryAgent.run(() => planResearch(userGoal, context, settings, toolMode), "Planning");
+    } catch (planningError) {
+      console.warn("Planning Agent failed, falling back to default plan.", planningError);
+      // Fallback Plan ensures the system continues even if the LLM fails to structure tasks
+      plan = {
+        tasks: [{
+          title: "Comprehensive Research",
+          description: "Investigate the core topic thoroughly using available sources.",
+          query: userGoal
+        }]
+      };
+      await store.addMessage(sessionId, MessageRole.SYSTEM, "Task Planner: Optimization failed. Reverting to standard research execution.");
+    }
     
     // Agent 8: Deduplication (using existing session tasks as history)
     const previousQueries = session?.tasks.map(t => t.query) || [];
@@ -52,13 +66,18 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
     }));
 
     await store.updateSessionTasks(sessionId, tasks);
-    await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks based on '${settings.expertiseLevel}' profile.`);
+    
+    if (tasks.length > 1) {
+        await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks based on '${settings.expertiseLevel}' profile.`);
+    }
 
     const findingsAccumulator: { task: string; result: string }[] = [];
     const allSources: Source[] = [];
 
-    // --- PHASE 2: EXECUTION & VERIFICATION ---
-    for (const task of tasks) {
+    // --- PHASE 2: EXECUTION & VERIFICATION (PARALLELIZED) ---
+    
+    // Define the unit of work for a single task
+    const processTask = async (task: any) => {
       await store.updateTaskStatus(sessionId, task.id, TaskStatus.IN_PROGRESS);
       
       // Agent 2: Search Agent
@@ -77,18 +96,36 @@ export const startResearchProcess = async (sessionId: string, userGoal: string, 
         console.log(`[Extraction Agent] Extracted data for ${task.title}`, structuredData);
       }
 
-      allSources.push(...searchResult.sources);
-      findingsAccumulator.push({ task: task.title, result: searchResult.content });
-
-      // Update UI with status and verification results
-      await store.updateTaskStatus(
-        sessionId, 
-        task.id, 
-        TaskStatus.COMPLETED, 
-        searchResult.content,
-        searchResult.sources,
+      // Return data to be aggregated
+      return {
+        taskTitle: task.title,
+        taskId: task.id,
+        content: searchResult.content,
+        sources: searchResult.sources,
         verification
-      );
+      };
+    };
+
+    // Execute tasks in batches to manage concurrency
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+      const batch = tasks.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(batch.map(task => processTask(task)));
+
+      // Process results from the batch
+      for (const res of batchResults) {
+        allSources.push(...res.sources);
+        findingsAccumulator.push({ task: res.taskTitle, result: res.content });
+        
+        await store.updateTaskStatus(
+          sessionId, 
+          res.taskId, 
+          TaskStatus.COMPLETED, 
+          res.content, 
+          res.sources, 
+          res.verification
+        );
+      }
     }
 
     await store.addMessage(sessionId, MessageRole.SYSTEM, "Research Orchestrator: Analysis complete. Synthesizing report...");

@@ -7,11 +7,18 @@ export interface SearchResult {
   rankingScore?: number;
 }
 
+// Define the shape of the grounding metadata from the API
+interface GroundingChunk {
+  web?: {
+    uri?: string;
+    title?: string;
+  };
+}
+
 export const executeSearch = async (query: string): Promise<SearchResult> => {
   const ai = getAiClient();
 
   // Orchestrate the search using Gemini's grounding
-  // This acts as the "Multi-source search orchestration"
   try {
     const response = await ai.models.generateContent({
       model: MODEL_FAST,
@@ -32,12 +39,13 @@ export const executeSearch = async (query: string): Promise<SearchResult> => {
     const content = response.text || "No results found.";
     
     // Extract grounding metadata for sources including titles
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: Source[] = (chunks as any[])
-      .filter((c: any) => c.web?.uri)
-      .map((c: any) => ({
-        url: c.web.uri,
-        title: c.web.title || new URL(c.web.uri).hostname
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks as GroundingChunk[] || [];
+    
+    const sources: Source[] = chunks
+      .filter(c => c.web?.uri)
+      .map(c => ({
+        url: c.web?.uri || "",
+        title: c.web?.title || (c.web?.uri ? new URL(c.web.uri).hostname : "Unknown Source")
       }));
 
     // Deduplicate sources by URL

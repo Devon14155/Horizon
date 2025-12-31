@@ -1,6 +1,6 @@
 import { Type, GenerateContentResponse } from "@google/genai";
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
-import { withRetry } from "../utils/retry";
+import { withRetry, cleanJson } from "../utils/retry";
 
 export const generateSuggestions = async (context: string): Promise<string[]> => {
   const ai = getAiClient();
@@ -36,7 +36,7 @@ export const generateSuggestions = async (context: string): Promise<string[]> =>
       }
     }));
     
-    const data = JSON.parse(response.text || "{}");
+    const data = JSON.parse(cleanJson(response.text || "{}"));
     return data.suggestions || [];
   } catch (error) {
     console.warn("Suggestion Agent failed, using heuristic fallback.", error);

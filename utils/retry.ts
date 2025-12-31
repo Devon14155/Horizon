@@ -28,3 +28,24 @@ export async function withRetry<T>(
   
   throw lastError;
 }
+
+/**
+ * sanitizes JSON output from LLMs which often includes markdown code blocks
+ * or conversational filler text.
+ */
+export const cleanJson = (text: string): string => {
+  if (!text) return "{}";
+  
+  // Remove markdown code blocks
+  let cleaned = text.replace(/```json/gi, "").replace(/```/g, "");
+  
+  // Locate the valid JSON object wrapper
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  
+  return cleaned.trim();
+};

@@ -2,6 +2,7 @@ import { Type, GenerationConfig } from "@google/genai";
 import { getAiClient, MODEL_REASONING } from "../services/geminiService";
 import { UserSettings, ToolMode } from "../types";
 import { personalizePrompt } from "./personalization";
+import { cleanJson } from "../utils/retry";
 
 export interface PlanResult {
   tasks: { title: string; description: string; query: string }[];
@@ -65,7 +66,7 @@ export const planResearch = async (
     });
     
     const text = response.text || "{}";
-    return JSON.parse(text);
+    return JSON.parse(cleanJson(text));
   } catch (error) {
     console.error("Planning failed", error);
     throw error;
