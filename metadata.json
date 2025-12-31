@@ -1,0 +1,5 @@
+{
+  "name": "Horizon Research",
+  "description": "An offline-first, AI-powered research assistant using Gemini API to plan, execute, and synthesize complex research tasks.",
+  "requestFramePermissions": []
+}
