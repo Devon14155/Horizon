@@ -1,9 +1,9 @@
 import React from 'react';
 import { useStore } from '../store/appStore';
-import { Plus, MessageSquare, Trash2, Menu, Settings } from 'lucide-react';
+import { Plus, Clock, Settings, HelpCircle } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { sessions, currentSessionId, createSession, loadSession, deleteSession, sidebarOpen, toggleSidebar, toggleSettings } = useStore();
+  const { sessions, currentSessionId, createSession, loadSession, sidebarOpen, toggleSettings } = useStore();
 
   const handleNewChat = async () => {
     await createSession("New Research");
@@ -12,58 +12,66 @@ export const Sidebar: React.FC = () => {
   if (!sidebarOpen) return null;
 
   return (
-    <div className="w-72 h-screen bg-white dark:bg-horizon-900 border-r border-gray-200 dark:border-horizon-700 flex flex-col transition-all duration-300">
-      <div className="p-4 border-b border-gray-200 dark:border-horizon-700 flex items-center justify-between">
-        <h1 className="text-xl font-bold font-mono text-slate-800 dark:text-white tracking-wider flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-horizon-500"></span>
-          HORIZON
-        </h1>
-        <button onClick={toggleSidebar} className="text-gray-500 dark:text-horizon-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-          <Menu size={20} />
-        </button>
+    <div className="w-64 h-screen bg-white dark:bg-horizon-900 border-r border-gray-100 dark:border-horizon-800 flex flex-col transition-all duration-300 font-sans">
+      {/* Header */}
+      <div className="p-6 pb-2">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Horizon</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Research Assistant</p>
       </div>
 
-      <div className="p-4">
+      {/* New Chat Button */}
+      <div className="px-4 py-4">
         <button 
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center gap-2 bg-horizon-500 hover:bg-horizon-400 text-white py-3 rounded-lg transition-colors font-medium shadow-lg shadow-horizon-500/20"
+          className="w-full flex items-center gap-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-4 py-3 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors font-medium text-sm"
         >
-          <Plus size={18} /> New Research
+          <Plus size={18} />
+          New Chat
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        <div className="text-xs font-semibold text-gray-500 dark:text-horizon-400 uppercase tracking-wider mb-2">History</div>
-        {sessions.map(session => (
-          <div 
-            key={session.id}
-            onClick={() => loadSession(session.id)}
-            className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
-              currentSessionId === session.id 
-                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-horizon-800 dark:border-horizon-500/50 dark:text-white' 
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-horizon-800/50 dark:hover:text-gray-200'
-            }`}
-          >
-            <div className="flex items-center gap-3 overflow-hidden">
-              <MessageSquare size={16} className={currentSessionId === session.id ? 'text-blue-500 dark:text-horizon-400' : 'text-gray-400 dark:text-gray-600'} />
-              <span className="truncate text-sm">{session.title}</span>
-            </div>
-            <button 
-              onClick={(e) => { e.stopPropagation(); deleteSession(session.id); }}
-              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+      {/* Navigation & Recent Research - Flex 1 to fill space */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+        
+        <div className="mb-6">
+           <div className="flex items-center gap-3 px-3 py-2 text-slate-700 dark:text-slate-200 rounded-lg">
+              <Clock size={18} className="text-slate-400" />
+              <span className="text-sm font-medium">Recent Research</span>
+           </div>
+           
+           <div className="ml-9 mt-1 space-y-1">
+             {sessions.length === 0 && (
+                <div className="text-xs text-slate-400 italic py-1">No recent chats</div>
+             )}
+             {sessions.map(session => (
+               <div 
+                 key={session.id}
+                 onClick={() => loadSession(session.id)}
+                 className={`text-xs truncate py-2 cursor-pointer transition-colors ${
+                   currentSessionId === session.id 
+                     ? 'text-blue-600 font-medium dark:text-blue-400' 
+                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-500 dark:hover:text-slate-300'
+                 }`}
+               >
+                 {session.title}
+               </div>
+             ))}
+           </div>
+        </div>
       </div>
-      
-      <div className="p-4 border-t border-gray-200 dark:border-horizon-700">
+
+      {/* Bottom Footer Section: Help & Settings */}
+      <div className="p-4 border-t border-gray-100 dark:border-horizon-800 space-y-1">
+        <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-gray-50 dark:hover:bg-horizon-800 transition-colors">
+          <HelpCircle size={18} className="text-slate-400" />
+          <span className="text-sm font-medium">Help & FAQ</span>
+        </button>
+
         <button 
           onClick={toggleSettings}
-          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-horizon-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-gray-50 dark:hover:bg-horizon-800 transition-colors"
         >
-          <Settings size={18} />
+          <Settings size={18} className="text-slate-400" />
           <span className="text-sm font-medium">Settings</span>
         </button>
       </div>

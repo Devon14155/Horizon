@@ -21,7 +21,7 @@ function App() {
   }, [userSettings.theme]);
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-horizon-900 dark:text-slate-50 transition-colors duration-300">
+    <div className="flex w-full h-screen overflow-hidden bg-[#F8FAFC] text-slate-900 dark:bg-horizon-900 dark:text-slate-50 transition-colors duration-300 font-sans">
       <Sidebar />
       <ChatArea />
       <SettingsPanel />
