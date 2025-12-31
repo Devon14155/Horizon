@@ -1,9 +1,9 @@
 import { getAiClient, MODEL_FAST } from "../services/geminiService";
-import { RetryAgent } from "./retry_recovery";
+import { Source } from "../types";
 
 export interface SearchResult {
   content: string;
-  sources: string[];
+  sources: Source[];
   rankingScore?: number;
 }
 
@@ -31,13 +31,17 @@ export const executeSearch = async (query: string): Promise<SearchResult> => {
 
     const content = response.text || "No results found.";
     
-    // Extract grounding metadata for sources
+    // Extract grounding metadata for sources including titles
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: string[] = (chunks as any[])
-      .map((c: any) => c.web?.uri)
-      .filter((uri: unknown): uri is string => typeof uri === 'string');
+    const sources: Source[] = (chunks as any[])
+      .filter((c: any) => c.web?.uri)
+      .map((c: any) => ({
+        url: c.web.uri,
+        title: c.web.title || new URL(c.web.uri).hostname
+      }));
 
-    const uniqueSources = Array.from(new Set(sources));
+    // Deduplicate sources by URL
+    const uniqueSources = Array.from(new Map(sources.map(s => [s.url, s])).values());
 
     return { 
       content, 

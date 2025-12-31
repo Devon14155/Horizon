@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings, VerificationResult } from '../types';
+import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings, VerificationResult, Source } from '../types';
 import { db } from '../database/db';
 
 interface StoreActions {
@@ -9,7 +9,7 @@ interface StoreActions {
   loadSession: (id: string) => Promise<void>;
   addMessage: (sessionId: string, role: MessageRole, content: string, suggestions?: string[]) => Promise<void>;
   updateSessionTasks: (sessionId: string, tasks: ResearchTask[]) => Promise<void>;
-  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: string[], verification?: VerificationResult) => Promise<void>;
+  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: Source[], verification?: VerificationResult) => Promise<void>;
   setSynthesis: (sessionId: string, report: string) => Promise<void>;
   toggleSidebar: () => void;
   toggleSettings: () => void;
@@ -118,7 +118,8 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
           ...t, 
           status, 
           findings: findings || t.findings,
-          sourceUrls: sources ? [...(t.sourceUrls || []), ...sources] : t.sourceUrls,
+          sources: sources ? [...(t.sources || []), ...sources] : t.sources,
+          sourceUrls: sources ? [...(t.sourceUrls || []), ...sources.map(s => s.url)] : t.sourceUrls,
           verification: verification || t.verification
         };
       }

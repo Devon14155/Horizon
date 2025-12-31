@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../store/appStore';
-import { TaskStatus, MessageRole } from '../types';
+import { TaskStatus, MessageRole, Source } from '../types';
 
 // Core Agents
 import { planResearch } from './planner'; // Agent 1
-import { executeSearch } from './search'; // Agent 2 (Replaced researcher.ts)
+import { executeSearch } from './search'; // Agent 2
 import { synthesizeReport } from './synthesizer'; // Agent 5
 import { formatReport } from './reporter'; // Agent 6
 import { generateSuggestions } from './suggester'; // Agent 7
@@ -21,7 +21,6 @@ import { generateBibliography } from './citation'; // Agent 12
 import { detectTrends } from './trend_detector'; // Agent 14
 import { analyzeData } from './data_analysis'; // Agent 15
 import { translateContent } from './multilanguage'; // Agent 16
-// Personalization (Agent 13) is used inside Planner and Synthesizer
 
 export const startResearchProcess = async (sessionId: string, userGoal: string) => {
   const store = useStore.getState();
@@ -37,13 +36,17 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     // Agent 1: Task Planner
     const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings), "Planning");
     
+    // Agent 8: Deduplication (using existing session tasks as history)
+    const previousQueries = session?.tasks.map(t => t.query) || [];
+    
     const tasks = plan.tasks.map(t => ({
       id: uuidv4(),
       title: t.title,
       description: t.description,
-      query: deduplicateQuery(t.query, []), // Agent 8: Context Manager (Deduplication)
+      query: deduplicateQuery(t.query, previousQueries), 
       status: TaskStatus.PENDING,
       sourceUrls: [],
+      sources: [],
       qualityScore: 0
     }));
 
@@ -51,7 +54,7 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     await store.addMessage(sessionId, MessageRole.SYSTEM, `Task Planner: Created ${tasks.length} tasks based on '${settings.expertiseLevel}' profile.`);
 
     const findingsAccumulator: { task: string; result: string }[] = [];
-    const allSources: string[] = [];
+    const allSources: Source[] = [];
 
     // --- PHASE 2: EXECUTION & VERIFICATION ---
     for (const task of tasks) {
@@ -61,12 +64,13 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
       const searchResult = await RetryAgent.run(() => executeSearch(task.query), "Search");
       
       // Agent 4: Quality Control
-      const quality = await evaluateQuality(searchResult.content, searchResult.sources);
+      const sourceUrls = searchResult.sources.map(s => s.url);
+      const quality = await evaluateQuality(searchResult.content, sourceUrls);
       
       // Agent 9: Verification Agent
-      const verification = await verifyFindings(task.title, searchResult.content, searchResult.sources);
+      const verification = await verifyFindings(task.title, searchResult.content, sourceUrls);
       
-      // Agent 11: Extraction Agent (Extract structured data for potential future use)
+      // Agent 11: Extraction Agent
       const structuredData = await extractKeyData(searchResult.content);
       if (Object.keys(structuredData).length > 0) {
         console.log(`[Extraction Agent] Extracted data for ${task.title}`, structuredData);
@@ -93,9 +97,9 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     // Agent 14: Trend Detector
     const trends = await detectTrends(findingsAccumulator.map(f => f.result));
     
-    // Agent 15: Data Analysis (Check for charts)
+    // Agent 15: Data Analysis
     const combinedText = findingsAccumulator.map(f => f.result).join("\n");
-    const chartData = await analyzeData(combinedText); // Used by UI if present
+    const chartData = await analyzeData(combinedText); 
     
     // Agent 5: Synthesis Agent
     const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings);
@@ -107,7 +111,9 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     const finalContent = await translateContent(formattedReport, settings.language);
     
     // Agent 12: Citation Agent
-    const bibliography = generateBibliography(Array.from(new Set(allSources)));
+    // Deduplicate sources by URL before bibliography
+    const uniqueSources = Array.from(new Map(allSources.map(s => [s.url, s])).values());
+    const bibliography = generateBibliography(uniqueSources);
     
     const finalReport = `${finalContent}\n\n## References\n${bibliography}`;
 
@@ -128,7 +134,6 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     console.error("Research Orchestrator failed:", error);
     await store.addMessage(sessionId, MessageRole.SYSTEM, "System Error: The research process encountered an unexpected error.");
     
-    // Mark remaining tasks as failed
     const session = store.sessions.find(s => s.id === sessionId);
     if (session) {
       const failedTasks = session.tasks.filter(t => t.status === TaskStatus.PENDING || t.status === TaskStatus.IN_PROGRESS);

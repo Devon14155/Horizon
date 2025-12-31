@@ -18,6 +18,11 @@ export interface VerificationResult {
   correction?: string;
 }
 
+export interface Source {
+  url: string;
+  title: string;
+}
+
 export interface ResearchTask {
   id: string;
   title: string;
@@ -26,6 +31,7 @@ export interface ResearchTask {
   query: string;
   findings?: string;
   sourceUrls?: string[];
+  sources?: Source[];
   qualityScore?: number; // 0-100
   verification?: VerificationResult;
 }

@@ -23,19 +23,11 @@ export const ChatArea: React.FC = () => {
     scrollToBottom();
   }, [currentSession?.messages, currentSession?.tasks]);
 
-  const handleSuggestionClick = async (suggestion: string) => {
-    if (isProcessing) return;
-    setInput(suggestion);
-    // Optional: Auto-submit
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isProcessing) return;
-
-    const text = input;
-    setInput('');
+  const processInput = async (text: string) => {
+    if (!text.trim() || isProcessing) return;
+    
     setIsProcessing(true);
+    setInput('');
 
     let sessionId = currentSessionId;
     if (!sessionId) {
@@ -48,6 +40,16 @@ export const ChatArea: React.FC = () => {
     }
     
     setIsProcessing(false);
+  };
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (isProcessing) return;
+    await processInput(suggestion);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await processInput(input);
   };
 
   if (!currentSessionId && sessions.length === 0) {
