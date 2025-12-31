@@ -3,6 +3,7 @@ import { useStore } from '../store/appStore';
 import { ArrowLeft, Download, FileText, File } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { exportToPDF, exportToMarkdown } from '../tools/exportTool';
+import { exportToDOCX } from '../tools/docxTool';
 
 export const ReportView: React.FC = () => {
   const { currentSessionId, sessions, showReportView, setShowReportView } = useStore();
@@ -25,6 +26,12 @@ export const ReportView: React.FC = () => {
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-horizon-700 hover:bg-horizon-600 text-white text-sm transition-colors"
           >
             <File size={16} /> Markdown
+          </button>
+           <button 
+            onClick={() => exportToDOCX(session.title, session.synthesis!)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-sm transition-colors"
+          >
+            <FileText size={16} /> DOCX
           </button>
           <button 
             onClick={() => exportToPDF(session.title, session.synthesis!)}

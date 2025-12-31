@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/appStore';
 import { startResearchProcess } from '../agents/orchestrator';
 import { MessageRole } from '../types';
-import { Send, Menu, Bot, User, FileText } from 'lucide-react';
+import { Send, Menu, Bot, User, FileText, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { TaskBoard } from './TaskBoard';
 import { ReportView } from './ReportView';
@@ -22,6 +22,12 @@ export const ChatArea: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [currentSession?.messages, currentSession?.tasks]);
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (isProcessing) return;
+    setInput(suggestion);
+    // Optional: Auto-submit
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +61,7 @@ export const ChatArea: React.FC = () => {
          <h2 className="text-4xl font-mono text-white mb-4 tracking-tighter">HORIZON</h2>
          <p className="text-center max-w-md mb-8">
            AI-powered research assistant grounded in real-time data.
-           Plan. Execute. Synthesize.
+           Plan. Execute. Verify. Synthesize.
          </p>
          <form onSubmit={handleSubmit} className="w-full max-w-lg relative">
             <input
@@ -97,29 +103,47 @@ export const ChatArea: React.FC = () => {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         {currentSession?.messages.map((msg) => (
-          <div key={msg.id} className={`flex gap-4 ${msg.role === MessageRole.USER ? 'justify-end' : 'justify-start'}`}>
-            {msg.role !== MessageRole.USER && (
-               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === MessageRole.SYSTEM ? 'bg-orange-500/20 text-orange-400' : 'bg-horizon-500/20 text-horizon-400'}`}>
-                 <Bot size={16} />
-               </div>
-            )}
-            
-            <div className={`max-w-3xl rounded-2xl p-4 ${
-              msg.role === MessageRole.USER 
-                ? 'bg-horizon-500 text-white' 
-                : msg.role === MessageRole.SYSTEM 
-                  ? 'bg-transparent text-gray-500 text-sm border border-dashed border-gray-700 font-mono'
-                  : 'bg-horizon-800 text-gray-100 border border-horizon-700 shadow-sm'
-            }`}>
-              <div className="prose prose-invert prose-sm max-w-none">
-                 <ReactMarkdown>{msg.content}</ReactMarkdown>
+          <div key={msg.id} className="space-y-3">
+            <div className={`flex gap-4 ${msg.role === MessageRole.USER ? 'justify-end' : 'justify-start'}`}>
+              {msg.role !== MessageRole.USER && (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === MessageRole.SYSTEM ? 'bg-orange-500/20 text-orange-400' : 'bg-horizon-500/20 text-horizon-400'}`}>
+                  <Bot size={16} />
+                </div>
+              )}
+              
+              <div className={`max-w-3xl rounded-2xl p-4 ${
+                msg.role === MessageRole.USER 
+                  ? 'bg-horizon-500 text-white' 
+                  : msg.role === MessageRole.SYSTEM 
+                    ? 'bg-transparent text-gray-500 text-sm border border-dashed border-gray-700 font-mono'
+                    : 'bg-horizon-800 text-gray-100 border border-horizon-700 shadow-sm'
+              }`}>
+                <div className="prose prose-invert prose-sm max-w-none">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
               </div>
+
+              {msg.role === MessageRole.USER && (
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
+                  <User size={16} className="text-gray-300" />
+                </div>
+              )}
             </div>
 
-            {msg.role === MessageRole.USER && (
-               <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
-                 <User size={16} className="text-gray-300" />
-               </div>
+            {/* Suggestions Chips */}
+            {msg.suggestions && msg.suggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 ml-12">
+                {msg.suggestions.map((sugg, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => handleSuggestionClick(sugg)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-horizon-800 border border-horizon-700 hover:border-horizon-500 hover:text-white text-xs text-gray-400 transition-all"
+                  >
+                    <Sparkles size={12} className="text-horizon-400" />
+                    {sugg}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         ))}

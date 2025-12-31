@@ -2,13 +2,20 @@ export enum TaskStatus {
   PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED'
+  FAILED = 'FAILED',
+  VERIFIED = 'VERIFIED'
 }
 
 export enum MessageRole {
   USER = 'user',
   MODEL = 'model',
   SYSTEM = 'system'
+}
+
+export interface VerificationResult {
+  isAccurate: boolean;
+  confidence: number;
+  correction?: string;
 }
 
 export interface ResearchTask {
@@ -20,6 +27,7 @@ export interface ResearchTask {
   findings?: string;
   sourceUrls?: string[];
   qualityScore?: number; // 0-100
+  verification?: VerificationResult;
 }
 
 export interface Message {
@@ -28,6 +36,7 @@ export interface Message {
   content: string;
   timestamp: number;
   relatedTaskId?: string;
+  suggestions?: string[]; // New: Next step suggestions
 }
 
 export interface ReportConfig {
@@ -49,7 +58,7 @@ export interface ResearchSession {
 }
 
 export interface UserSettings {
-  apiKey?: string; // Stored locally if user provides it (optional fallback)
+  // apiKey removed per guidelines
   theme: 'dark' | 'light';
   language: string;
   expertiseLevel: 'beginner' | 'expert';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResearchTask, TaskStatus } from '../types';
-import { Loader2, CheckCircle, Circle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle, Circle, AlertCircle, ExternalLink, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 interface TaskBoardProps {
   tasks: ResearchTask[];
@@ -26,7 +26,22 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks }) => {
                 {task.status === TaskStatus.FAILED && <AlertCircle size={18} className="text-red-500" />}
               </div>
               <div className="flex-1">
-                <h4 className={`text-sm font-medium ${task.status === TaskStatus.COMPLETED ? 'text-gray-300' : 'text-white'}`}>{task.title}</h4>
+                <div className="flex justify-between items-start">
+                  <h4 className={`text-sm font-medium ${task.status === TaskStatus.COMPLETED ? 'text-gray-300' : 'text-white'}`}>{task.title}</h4>
+                  
+                  {/* Verification Badge */}
+                  {task.verification && (
+                    <div className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
+                      task.verification.isAccurate 
+                        ? 'bg-green-500/10 text-green-400 border-green-500/30' 
+                        : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                    }`}>
+                      {task.verification.isAccurate ? <ShieldCheck size={10} /> : <ShieldAlert size={10} />}
+                      {Math.round(task.verification.confidence)}% Trusted
+                    </div>
+                  )}
+                </div>
+
                 <p className="text-xs text-gray-500 mt-1">{task.description}</p>
                 
                 {task.sourceUrls && task.sourceUrls.length > 0 && (

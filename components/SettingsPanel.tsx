@@ -23,20 +23,7 @@ export const SettingsPanel: React.FC = () => {
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Gemini API Key</label>
-            <input 
-              type="password"
-              value={userSettings.apiKey || ''}
-              onChange={(e) => updateSettings({ apiKey: e.target.value })}
-              placeholder="Enter your API Key (Optional if env var set)"
-              className="w-full bg-horizon-900 border border-horizon-700 rounded-lg px-3 py-2 text-white text-sm focus:border-horizon-500 outline-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Required for custom deployments. 
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-horizon-400 ml-1 hover:underline">Get key</a>
-            </p>
-          </div>
+          {/* API Key input removed. Key is managed via environment variable process.env.API_KEY */}
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Expertise Level</label>

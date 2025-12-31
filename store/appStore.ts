@@ -1,15 +1,15 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings } from '../types';
+import { AppState, ResearchSession, Message, MessageRole, TaskStatus, ResearchTask, UserSettings, VerificationResult } from '../types';
 import { db } from '../database/db';
 
 interface StoreActions {
   init: () => Promise<void>;
   createSession: (title: string) => Promise<string>;
   loadSession: (id: string) => Promise<void>;
-  addMessage: (sessionId: string, role: MessageRole, content: string) => Promise<void>;
+  addMessage: (sessionId: string, role: MessageRole, content: string, suggestions?: string[]) => Promise<void>;
   updateSessionTasks: (sessionId: string, tasks: ResearchTask[]) => Promise<void>;
-  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: string[]) => Promise<void>;
+  updateTaskStatus: (sessionId: string, taskId: string, status: TaskStatus, findings?: string, sources?: string[], verification?: VerificationResult) => Promise<void>;
   setSynthesis: (sessionId: string, report: string) => Promise<void>;
   toggleSidebar: () => void;
   toggleSettings: () => void;
@@ -36,11 +36,19 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
 
   init: async () => {
     const sessions = await db.sessions.orderBy('updatedAt').reverse().toArray();
-    // Load settings from localStorage if available
     const savedSettings = localStorage.getItem('horizon_settings');
+    const parsed = savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
+    
+    // Ensure we don't carry over old fields like apiKey if they exist in localStorage
+    const userSettings: UserSettings = {
+        theme: parsed.theme || DEFAULT_SETTINGS.theme,
+        language: parsed.language || DEFAULT_SETTINGS.language,
+        expertiseLevel: parsed.expertiseLevel || DEFAULT_SETTINGS.expertiseLevel
+    };
+
     set({ 
       sessions, 
-      userSettings: savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS 
+      userSettings
     });
   },
 
@@ -64,7 +72,7 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
     set({ currentSessionId: id, showReportView: false });
   },
 
-  addMessage: async (sessionId, role, content) => {
+  addMessage: async (sessionId, role, content, suggestions) => {
     const session = await db.sessions.get(sessionId);
     if (!session) return;
 
@@ -72,7 +80,8 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
       id: uuidv4(),
       role,
       content,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      suggestions
     };
 
     const updatedSession = {
@@ -99,7 +108,7 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
     set({ sessions: sessions.map(s => s.id === sessionId ? updatedSession : s) });
   },
 
-  updateTaskStatus: async (sessionId, taskId, status, findings, sources) => {
+  updateTaskStatus: async (sessionId, taskId, status, findings, sources, verification) => {
     const session = await db.sessions.get(sessionId);
     if (!session) return;
 
@@ -109,7 +118,8 @@ export const useStore = create<AppState & StoreActions>((set, get) => ({
           ...t, 
           status, 
           findings: findings || t.findings,
-          sourceUrls: sources ? [...(t.sourceUrls || []), ...sources] : t.sourceUrls
+          sourceUrls: sources ? [...(t.sourceUrls || []), ...sources] : t.sourceUrls,
+          verification: verification || t.verification
         };
       }
       return t;

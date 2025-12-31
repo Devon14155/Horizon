@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
     <title>Horizon | AI Research Assistant</title>
+    <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script>
@@ -23,7 +25,10 @@
                 600: '#475569',
                 500: '#3b82f6',
                 400: '#60a5fa',
-                accent: '#8b5cf6'
+                accent: '#8b5cf6',
+                success: '#10b981',
+                warning: '#f59e0b',
+                error: '#ef4444'
               }
             }
           }
@@ -32,7 +37,6 @@
     </script>
     <style>
       body { background-color: #0f172a; color: #f8fafc; }
-      /* Custom Scrollbar */
       ::-webkit-scrollbar { width: 8px; }
       ::-webkit-scrollbar-track { background: #1e293b; }
       ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -56,12 +60,24 @@
     "dexie": "https://esm.sh/dexie@^4.2.1",
     "zustand": "https://esm.sh/zustand@^5.0.9",
     "jspdf": "https://esm.sh/jspdf@2.5.1",
-    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "docx": "https://esm.sh/docx@8.5.0"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

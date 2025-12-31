@@ -1,29 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
-import { useStore } from "../store/appStore";
 
 export const getAiClient = () => {
-  // Try process.env first, then user settings
-  let apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    const settings = useStore.getState().userSettings;
-    apiKey = settings.apiKey;
-  }
-  
-  if (!apiKey) {
-    throw new Error("API Key Missing. Please configure it in Settings.");
-  }
-  
-  return new GoogleGenAI({ apiKey });
+  // Guidelines: API key must be obtained exclusively from the environment variable process.env.API_KEY.
+  // Guidelines: Do not generate UI elements for entering the API key.
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 export const MODEL_REASONING = 'gemini-3-pro-preview';
 export const MODEL_FAST = 'gemini-3-flash-preview'; 
 
 export const checkApiKey = () => {
-  try {
-    getAiClient();
-    return true;
-  } catch (e) {
-    return false;
-  }
+  // API key is a hard requirement from the environment.
+  return !!process.env.API_KEY;
 };
