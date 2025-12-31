@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../store/appStore';
-import { TaskStatus, MessageRole, Source } from '../types';
+import { TaskStatus, MessageRole, Source, ToolMode } from '../types';
 
 // Core Agents
 import { planResearch } from './planner'; // Agent 1
@@ -22,7 +22,7 @@ import { detectTrends } from './trend_detector'; // Agent 14
 import { analyzeData } from './data_analysis'; // Agent 15
 import { translateContent } from './multilanguage'; // Agent 16
 
-export const startResearchProcess = async (sessionId: string, userGoal: string) => {
+export const startResearchProcess = async (sessionId: string, userGoal: string, toolMode: ToolMode = 'web') => {
   const store = useStore.getState();
 
   try {
@@ -31,10 +31,11 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     const settings = store.userSettings;
 
     // --- PHASE 1: PLANNING ---
-    await store.addMessage(sessionId, MessageRole.SYSTEM, "Orchestrator: Initializing 16-Agent System...");
+    await store.addMessage(sessionId, MessageRole.SYSTEM, `Orchestrator: Initializing ${toolMode === 'web' ? 'Quick' : 'Deep'} Research System...`);
     
     // Agent 1: Task Planner
-    const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings), "Planning");
+    // Pass toolMode to allow planner to decide on task complexity (1 task for web, 3-6 for research/thinking)
+    const plan = await RetryAgent.run(() => planResearch(userGoal, context, settings, toolMode), "Planning");
     
     // Agent 8: Deduplication (using existing session tasks as history)
     const previousQueries = session?.tasks.map(t => t.query) || [];
@@ -102,7 +103,8 @@ export const startResearchProcess = async (sessionId: string, userGoal: string) 
     const chartData = await analyzeData(combinedText); 
     
     // Agent 5: Synthesis Agent
-    const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings);
+    // Pass toolMode to enable thinking budget in synthesis
+    const rawSynthesis = await synthesizeReport(userGoal, findingsAccumulator, trends, settings, toolMode);
     
     // Agent 6: Report Agent
     const formattedReport = await formatReport(rawSynthesis, 'academic', settings);

@@ -1,12 +1,13 @@
 import { getAiClient, MODEL_REASONING } from "../services/geminiService";
-import { UserSettings } from "../types";
+import { UserSettings, ToolMode } from "../types";
 import { personalizePrompt } from "./personalization";
 
 export const synthesizeReport = async (
     goal: string, 
     findings: { task: string; result: string }[], 
     trends: string,
-    settings: UserSettings
+    settings: UserSettings,
+    toolMode: ToolMode = 'web'
 ): Promise<string> => {
   const ai = getAiClient();
 
@@ -34,12 +35,22 @@ export const synthesizeReport = async (
 
   const prompt = personalizePrompt(basePrompt, settings);
 
+  // Set thinking budget based on mode
+  let budget = 0;
+  if (toolMode === 'thinking') {
+      budget = 4096; // High budget for deep reasoning
+  } else if (toolMode === 'research') {
+      budget = 2048; // Moderate budget for standard research
+  } else {
+      budget = 0; // Low/No budget for quick web search results
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: MODEL_REASONING,
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 2048 }
+        thinkingConfig: budget > 0 ? { thinkingBudget: budget } : undefined
       }
     });
 

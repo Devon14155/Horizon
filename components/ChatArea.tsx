@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/appStore';
 import { startResearchProcess } from '../agents/orchestrator';
-import { MessageRole } from '../types';
+import { MessageRole, ToolMode } from '../types';
 import { Send, Menu, Bot, User, FileText, Sparkles, Paperclip, Mic, ArrowRight, ArrowUp, Wand2, Scale, Map, Microscope, Globe, FlaskConical, Brain, Settings, CheckCircle2, Circle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { TaskBoard } from './TaskBoard';
@@ -12,7 +12,7 @@ export const ChatArea: React.FC = () => {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTools, setShowTools] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<'web' | 'research' | 'thinking'>('web');
+  const [selectedTool, setSelectedTool] = useState<ToolMode>('web');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
@@ -37,10 +37,9 @@ export const ChatArea: React.FC = () => {
     }
 
     if (sessionId) {
-      // In a real implementation, we would pass selectedTool to the backend/orchestrator
-      // e.g. await startResearchProcess(sessionId, text, selectedTool);
       await addMessage(sessionId, MessageRole.USER, text);
-      await startResearchProcess(sessionId, text);
+      // Connect selectedTool to the backend logic
+      await startResearchProcess(sessionId, text, selectedTool);
     }
     
     setIsProcessing(false);
@@ -177,7 +176,7 @@ export const ChatArea: React.FC = () => {
                             <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-gray-200 dark:border-horizon-700 p-2 z-50 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Actions</div>
                                 
-                                <button onClick={() => setSelectedTool('web')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                                <button onClick={() => { setSelectedTool('web'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                     {selectedTool === 'web' 
                                         ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                         : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}
@@ -185,7 +184,7 @@ export const ChatArea: React.FC = () => {
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Web Search</span>
                                 </button>
 
-                                <button onClick={() => setSelectedTool('research')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                                <button onClick={() => { setSelectedTool('research'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                     {selectedTool === 'research' 
                                         ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                         : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}
@@ -193,7 +192,7 @@ export const ChatArea: React.FC = () => {
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Research Mode</span>
                                 </button>
 
-                                 <button onClick={() => setSelectedTool('thinking')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                                 <button onClick={() => { setSelectedTool('thinking'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                     {selectedTool === 'thinking' 
                                         ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                         : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}
@@ -367,7 +366,7 @@ export const ChatArea: React.FC = () => {
                         <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-horizon-800 rounded-2xl shadow-xl border border-gray-200 dark:border-horizon-700 p-2 z-50 animate-in fade-in slide-in-from-bottom-2">
                             <div className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Actions</div>
                             
-                            <button onClick={() => setSelectedTool('web')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                            <button onClick={() => { setSelectedTool('web'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                 {selectedTool === 'web' 
                                     ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                     : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}
@@ -375,7 +374,7 @@ export const ChatArea: React.FC = () => {
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Web Search</span>
                             </button>
 
-                            <button onClick={() => setSelectedTool('research')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                            <button onClick={() => { setSelectedTool('research'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                 {selectedTool === 'research' 
                                     ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                     : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}
@@ -383,7 +382,7 @@ export const ChatArea: React.FC = () => {
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Research Mode</span>
                             </button>
 
-                             <button onClick={() => setSelectedTool('thinking')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
+                             <button onClick={() => { setSelectedTool('thinking'); setShowTools(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-horizon-700 transition-colors group">
                                 {selectedTool === 'thinking' 
                                     ? <CheckCircle2 size={18} className="text-blue-500 fill-blue-500/10" /> 
                                     : <Circle size={18} className="text-slate-300 group-hover:text-slate-400" />}

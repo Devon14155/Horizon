@@ -12,6 +12,8 @@ export enum MessageRole {
   SYSTEM = 'system'
 }
 
+export type ToolMode = 'web' | 'research' | 'thinking';
+
 export interface VerificationResult {
   isAccurate: boolean;
   confidence: number;
